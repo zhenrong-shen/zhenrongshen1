@@ -20,7 +20,6 @@ import streamlit as st
 from PIL import Image
 
 from risk_checker.analyzer import analyze_text
-from risk_checker.fetcher import FetchError, fetch_url_text
 from risk_checker.ocr import extract_text
 from risk_checker.rules import Rule, load_rules, next_rule_id, save_rules
 
@@ -38,7 +37,7 @@ def analyze_tab():
     st.header("1. 공고 내용 입력")
     input_mode = st.radio(
         "입력 방식을 선택하세요",
-        ["텍스트 붙여넣기", "사이트 주소(URL) 입력", "화면 캡쳐 이미지 업로드"],
+        ["텍스트 붙여넣기", "화면 캡쳐 이미지 업로드"],
         horizontal=True,
     )
 
@@ -48,30 +47,6 @@ def analyze_tab():
         combined_text = st.text_area(
             "채용공고 텍스트를 붙여넣으세요", height=280, key="pasted_text"
         )
-    elif input_mode == "사이트 주소(URL) 입력":
-        st.caption(
-            "채용공고 페이지 주소를 입력하면 본문 텍스트를 자동으로 가져옵니다. "
-            "로그인이 필요하거나 자바스크립트로 내용을 표시하는 사이트는 "
-            "가져오지 못할 수 있으니, 이런 경우 '화면 캡쳐 이미지 업로드'를 이용하세요."
-        )
-        url = st.text_input("채용공고 URL", key="job_url", placeholder="https://www.example.com/job/12345")
-
-        if st.button("🌐 URL에서 텍스트 가져오기", type="primary", disabled=not url.strip()):
-            with st.spinner("페이지를 가져오는 중..."):
-                try:
-                    result = fetch_url_text(url)
-                    st.session_state["ocr_text"] = result.text
-                    st.success(f"본문 텍스트를 가져왔습니다. ({result.final_url}) 아래에서 내용을 확인·수정하세요.")
-                except FetchError as e:
-                    st.error(str(e))
-
-        combined_text = st.text_area(
-            "가져온 텍스트 (본문과 무관한 내용이 섞였다면 직접 정리한 뒤 분석하세요)",
-            value=st.session_state.get("ocr_text", ""),
-            height=280,
-            key="url_text_area",
-        )
-        st.session_state["ocr_text"] = combined_text
     else:
         st.caption(
             "공고 내용이 길어 한 화면에 다 안 잡히면, 이어지는 부분을 나눠서 "
